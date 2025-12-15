@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { CreateMLCEngine } from "@mlc-ai/web-llm";
 import * as pdfjsLib from "pdfjs-dist";
 import Tesseract from "tesseract.js";
+import { styles } from "./styles"; 
 
 const SELECTED_MODEL = "Llama-3.2-3B-Instruct-q4f32_1-MLC";
 
-// Configure PDF.js (For PDF parsing)
+// Configure PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 function App() {
@@ -60,8 +61,7 @@ function App() {
 
     try {
       let extractedText = "";
-
-      // Handle Images (OCR with Tesseract.js)
+      // Handle Images
       if (file.type.startsWith("image/")) {
         console.log("Processing image...");
         const worker = await Tesseract.createWorker("eng");
@@ -69,25 +69,21 @@ function App() {
         extractedText = ret.data.text;
         await worker.terminate();
       } 
-      // Handle PDFs (Text Extraction with PDF.js)
+      // Handle PDFs
       else if (file.type === "application/pdf") {
         console.log("Processing PDF...");
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-        
-        // Loop through all pages to get text
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const textContent = await page.getTextContent();
-          const pageText = textContent.items.map((item) => item.str).join(" ");
-          extractedText += `\n--- Page ${i} ---\n${pageText}`;
+          extractedText += `\n--- Page ${i} ---\n${textContent.items.map((item) => item.str).join(" ")}`;
         }
       } 
-      // Handle Text Files
+      // Handle Text
       else {
         extractedText = await file.text();
       }
-
       setFileContent(extractedText);
     } catch (error) {
       console.error("File processing error:", error);
@@ -124,7 +120,6 @@ function App() {
     const currentFile = fileContent;
     const currentFileName = fileName;
 
-    // Clear UI
     setUserInput("");
     setFileContent("");
     setFileName("");
@@ -180,29 +175,27 @@ function App() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-white font-sans text-gray-800">
-      
-      {/* CARD CONTAINER */}
-      <div className="w-full max-w-[600px] h-[80vh] bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden flex flex-col">
+    <div className={styles.pageWrapper}>
+      <div className={styles.cardContainer}>
         
         {/* HEADER */}
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+        <div className={styles.header}>
           <div className="text-center w-full">
-            <h1 className="text-lg font-bold text-gray-800">🔒 Private AI Chat</h1>
-            <p className="text-xs text-gray-500 mt-1">{loadingProgress}</p>
+            <h1 className={styles.headerTitle}>🔒 Private AI Chat</h1>
+            <p className={styles.headerStatus}>{loadingProgress}</p>
           </div>
-          <button onClick={() => setShowSettings(!showSettings)} className="text-gray-400 hover:text-gray-600 absolute right-6">
+          <button onClick={() => setShowSettings(!showSettings)} className={styles.settingsButton}>
             ⚙️
           </button>
         </div>
 
         {/* SETTINGS */}
         {showSettings && (
-          <div className="bg-gray-50 p-3 text-sm border-b border-gray-200">
-             <label className="block mb-1 text-gray-600 font-bold">Web Search API Key:</label>
+          <div className={styles.settingsPanel}>
+             <label className={styles.settingsLabel}>Web Search API Key:</label>
              <input 
                type="password" 
-               className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:border-blue-500"
+               className={styles.settingsInput}
                placeholder="Enter Tavily API Key..."
                value={tavilyKey}
                onChange={(e) => setTavilyKey(e.target.value)}
@@ -212,16 +205,16 @@ function App() {
 
         {/* STATUS BAR */}
         {(fileName || useWebSearch || isProcessingFile) && (
-          <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 flex justify-center">
+          <div className={styles.statusBar}>
             {isProcessingFile ? (
-               <span className="text-xs text-gray-500 animate-pulse">⏳ Processing file (OCR/Parsing)...</span>
+               <span className={styles.statusProcessing}>⏳ Processing file (OCR/Parsing)...</span>
             ) : fileName ? (
-              <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded border border-green-200 flex items-center gap-2">
+              <span className={styles.statusFile}>
                 📄 {fileName}
-                <button onClick={() => {setFileName(""); setFileContent("")}} className="font-bold hover:text-green-900">x</button>
+                <button onClick={() => {setFileName(""); setFileContent("")}} className={styles.closeButton}>x</button>
               </span>
             ) : (
-              <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded border border-blue-200">
+              <span className={styles.statusWeb}>
                 🌐 Web Search ON
               </span>
             )}
@@ -229,14 +222,10 @@ function App() {
         )}
 
         {/* CHAT AREA */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+        <div className={styles.chatContainer}>
           {messages.map((msg, index) => (
-            <div key={index} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[70%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
-                msg.role === "user" 
-                  ? "bg-blue-600 text-white rounded-br-none" 
-                  : "bg-gray-100 text-gray-800 border border-gray-200 rounded-bl-none"
-              }`}>
+            <div key={index} className={msg.role === "user" ? styles.rowUser : styles.rowAI}>
+              <div className={msg.role === "user" ? styles.bubbleUser : styles.bubbleAI}>
                 <strong>{msg.role === "user" ? "You" : "AI"}:</strong>
                 <div className="whitespace-pre-wrap">{msg.content}</div>
               </div>
@@ -246,9 +235,7 @@ function App() {
         </div>
 
         {/* INPUT AREA */}
-        <div className="p-4 border-t border-gray-100 bg-white flex items-center gap-2">
-          
-          {/* File Upload Button */}
+        <div className={styles.inputContainer}>
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -258,7 +245,7 @@ function App() {
           />
           <button 
             onClick={() => fileInputRef.current.click()} 
-            className={`p-2 rounded-lg transition ${fileName ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            className={fileName ? styles.btnActiveFile : styles.btnInactive}
             title="Upload PDF or Image"
             disabled={isProcessingFile}
           >
@@ -268,7 +255,7 @@ function App() {
           {!fileName && (
             <button 
               onClick={() => setUseWebSearch(!useWebSearch)}
-              className={`p-2 rounded-lg transition ${useWebSearch ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              className={useWebSearch ? styles.btnActiveWeb : styles.btnInactive}
               title="Toggle Web Search"
             >
               🌐
@@ -280,18 +267,27 @@ function App() {
             onChange={(e) => setUserInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
             placeholder="Type a message..."
-            className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-gray-800"
+            className={styles.inputField}
             disabled={!engine || isLoading || isProcessingFile}
           />
 
           <button 
             onClick={handleSend} 
             disabled={!engine || isLoading || isProcessingFile}
-            className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className={styles.sendButton}
           >
             Send
           </button>
         </div>
+
+        {/* DISCLAIMER FOOTER */}
+        <div className={styles.disclaimer}>
+          <p>
+            ⚠️ Local AI (Llama 3.2) knowledge cutoff is 2024. 
+            For real-time info, toggle <strong>Web Search</strong> (🌐).
+          </p>
+        </div>
+
       </div>
     </div>
   );
