@@ -111,14 +111,7 @@ export default function App() {
   const updateCurrentSessionMessages = (newMessages) => {
     setSessions(prev => prev.map(session => {
       if (session.id === currentSessionId) {
-        // Auto-Title Logic
-        let title = session.title;
-        if (session.messages.length === 0 && newMessages.length > 0) {
-          const firstMsg = newMessages[0].content;
-          const cleanMsg = firstMsg.replace(/\[Attached:.*?\]\n/, "");
-          title = cleanMsg.length > 25 ? cleanMsg.substring(0, 25) + "..." : cleanMsg;
-        }
-        return { ...session, messages: newMessages, title };
+        return { ...session, messages: newMessages };
       }
       return session;
     }));
@@ -250,6 +243,32 @@ export default function App() {
           return session;
         }));
       }
+
+      // Auto-Title Logic
+      const currentSession = sessions.find(s => s.id === currentSessionId);
+      if (currentSession && currentSession.title === "New Chat" && currentMsgs.length === 0) {
+        
+        const titleResponse = await engine.chat.completions.create({
+          messages: [
+            { role: "system", content: "You are a title generator. Reply with a static, 3-5 word topic label. Do NOT explain. Do NOT use punctuation." },
+            { role: "user", content: currentInput }
+          ],
+          max_tokens: 10,
+        });
+        
+        let smartTitle = titleResponse.choices[0].message.content.trim();
+        
+        smartTitle = smartTitle.replace(/["#*]/g, ''); 
+        
+        if (smartTitle.length > 30) {
+            smartTitle = smartTitle.substring(0, 30) + "...";
+        }
+        
+        setSessions(prev => prev.map(session => 
+          session.id === currentSessionId ? { ...session, title: smartTitle } : session
+        ));
+      }
+
     } catch (err) {
       console.error(err);
     } finally {
