@@ -6,7 +6,7 @@ import { styles } from "./styles";
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 const SELECTED_MODEL = "Llama-3.2-3B-Instruct-q4f32_1-MLC";
-const TAVILY_API_KEY = "tvly-xxxxxxxxxxxxxxxxxxxxxxxx"; 
+const TAVILY_API_KEY = import.meta.env.VITE_TAVILY_API_KEY;
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -148,8 +148,8 @@ export default function App() {
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const textContent = await page.getTextContent();
-          const pageText = textContent.items.map((item) => item.str).join(" ");
-          extractedText += `\nPage ${i}: ${pageText}`;
+          const pageText = textContent.items.map((item) => item.str).join("\n");
+          extractedText += `\n--- Page ${i} ---\n${pageText}\n`;
         }
       } 
       else {
