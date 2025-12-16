@@ -3,12 +3,12 @@ import { CreateMLCEngine } from "@mlc-ai/web-llm";
 import * as pdfjsLib from "pdfjs-dist";
 import Tesseract from "tesseract.js";
 import { styles } from "./styles";
+import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 
 const SELECTED_MODEL = "Llama-3.2-3B-Instruct-q4f32_1-MLC";
 const TAVILY_API_KEY = "tvly-xxxxxxxxxxxxxxxxxxxxxxxx"; 
 
-// Configure PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 export default function App() {
   // Engine State
@@ -23,7 +23,6 @@ export default function App() {
   // UI State
   const [userInput, setUserInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  // Removed showSettings state
   
   // Tools State
   const [fileContent, setFileContent] = useState("");
@@ -141,21 +140,26 @@ export default function App() {
         const ret = await worker.recognize(file);
         extractedText = ret.data.text;
         await worker.terminate();
-      } else if (file.type === "application/pdf") {
+      } 
+      else if (file.type === "application/pdf") {
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+        const loadingTask = pdfjsLib.getDocument(arrayBuffer);
+        const pdf = await loadingTask.promise;
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const textContent = await page.getTextContent();
-          extractedText += textContent.items.map((item) => item.str).join(" ");
+          const pageText = textContent.items.map((item) => item.str).join(" ");
+          extractedText += `\nPage ${i}: ${pageText}`;
         }
-      } else {
+      } 
+      else {
         extractedText = await file.text();
       }
       setFileContent(extractedText);
     } catch (error) {
       console.error(error);
       alert("Error reading file.");
+      setFileName("");
     } finally {
       setIsProcessingFile(false);
     }
@@ -190,8 +194,8 @@ export default function App() {
     const currentFileName = fileName;
 
     setUserInput("");
-    setFileContent("");
-    setFileName("");
+    // setFileContent("");
+    // setFileName("");
     setIsLoading(true);
 
     // Safeguard: If file is massive, create a truncated version for the UI history
