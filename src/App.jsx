@@ -169,10 +169,25 @@ export default function App() {
       const response = await fetch("https://api.tavily.com/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ api_key: TAVILY_API_KEY, query: query, max_results: 3 }),
+        body: JSON.stringify({ 
+            api_key: TAVILY_API_KEY, 
+            query: query, 
+            max_results: 5,           
+            search_depth: "advanced", 
+        }),
       });
+      
       const data = await response.json();
-      return data.results.map(r => `• ${r.title}: ${r.content}`).join("\n");
+      let context = "";
+      
+      if (data.answer) {
+          context += `=== TAVILY AI SUMMARY ===\n${data.answer}\n\n`;
+      }
+      context += "=== SOURCE DETAILS ===\n";
+      context += data.results.map(r => `• ${r.title}: ${r.content}`).join("\n");
+      
+      return context;
+
     } catch (err) {
       console.error(err);
       return "Error fetching web results.";
@@ -213,9 +228,10 @@ export default function App() {
         const safeFileContent = currentFile.slice(0, 20000); 
         contextData = `\n\n=== USER UPLOADED FILE (${currentFileName}) ===\n${safeFileContent}`;
       } else if (useWebSearch) {
-        systemInstruction = "You are a web-enabled AI. Answer using the search results below.";
+        const today = new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
+        systemInstruction = `You are a web-enabled AI. Today is ${today}. Answer using the search results below.`;
         const searchResults = await performWebSearch(currentInput);
-        contextData = `\n\n=== LIVE WEB SEARCH RESULTS ===\n${searchResults}`;
+        contextData = `\n\n${searchResults}`;
       }
 
       const systemMessage = { role: "system", content: `${systemInstruction}\n${contextData}` };
