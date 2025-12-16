@@ -4,6 +4,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import Tesseract from "tesseract.js";
 import { styles } from "./styles";
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import ReactMarkdown from 'react-markdown';
 
 const SELECTED_MODEL = "Llama-3.2-3B-Instruct-q4f32_1-MLC";
 const TAVILY_API_KEY = import.meta.env.VITE_TAVILY_API_KEY;
@@ -336,7 +337,11 @@ export default function App() {
               <div key={index} className={msg.role === "user" ? styles.rowUser : styles.rowAI}>
                 <div className={msg.role === "user" ? styles.bubbleUser : styles.bubbleAI}>
                   <strong>{msg.role === "user" ? "You" : "AI"}:</strong>
-                  <div>{msg.content}</div>
+                  <div className={msg.role === "user" ? styles.markdownUser : styles.markdownAI}>
+                    <ReactMarkdown>
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </div>
             ))

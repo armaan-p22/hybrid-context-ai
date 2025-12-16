@@ -1,5 +1,6 @@
 const buttonBase = "p-2 rounded-lg transition";
 const bubbleBase = "max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm whitespace-pre-wrap";
+const markdownBase = "prose prose-sm max-w-none prose-p:my-0 prose-ul:my-0 prose-li:my-0 leading-relaxed";
 
 export const styles = {
   // Layout
@@ -51,6 +52,9 @@ export const styles = {
   btnActiveFile: `${buttonBase} bg-green-100 text-green-600`,
   btnActiveWeb: `${buttonBase} bg-blue-100 text-blue-600`,
   btnInactive: `${buttonBase} bg-gray-100 text-gray-500 hover:bg-gray-200`,
+
+  markdownAI: `${markdownBase} text-gray-800`,
+  markdownUser: `${markdownBase} prose-invert text-white`,
 
   disclaimer: "bg-gray-50 p-2 text-center text-[10px] text-gray-400 border-t border-gray-100"
 };
