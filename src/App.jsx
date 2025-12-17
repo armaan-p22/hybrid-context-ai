@@ -77,6 +77,13 @@ export default function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [sessions, currentSessionId, isLoading]);
 
+  // Clear input and file when switching sessions
+  useEffect(() => {
+    setUserInput("");
+    setFileContent("");
+    setFileName("");
+  }, [currentSessionId]);
+
   // Session Handlers
   const createNewSession = () => {
     const newId = Date.now().toString();
@@ -173,7 +180,7 @@ export default function App() {
             api_key: TAVILY_API_KEY, 
             query: query, 
             max_results: 5,           
-            search_depth: "advanced", 
+            search_depth: "basic", 
         }),
       });
       
@@ -224,8 +231,8 @@ export default function App() {
 
       if (currentFile) {
         systemInstruction = "You are a helpful AI. Answer questions using ONLY the user uploaded file context below. Be concise.";
-        // Safeguard: Limit context to ~20,000 chars
-        const safeFileContent = currentFile.slice(0, 20000); 
+      
+        const safeFileContent = currentFile.slice(0, 12000);
         contextData = `\n\n=== USER UPLOADED FILE (${currentFileName}) ===\n${safeFileContent}`;
       } else if (useWebSearch) {
         const today = new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
@@ -277,10 +284,6 @@ export default function App() {
         
         smartTitle = smartTitle.replace(/["#*]/g, ''); 
         
-        if (smartTitle.length > 30) {
-            smartTitle = smartTitle.substring(0, 30) + "...";
-        }
-        
         setSessions(prev => prev.map(session => 
           session.id === currentSessionId ? { ...session, title: smartTitle } : session
         ));
@@ -311,7 +314,11 @@ export default function App() {
               onClick={() => setCurrentSessionId(session.id)}
               className={currentSessionId === session.id ? styles.sessionItemActive : styles.sessionItemInactive}
             >
-              <span className={styles.sessionTitle}>{session.title}</span>
+              <span className={styles.sessionTitle} title={session.title}>
+                {session.title.length > 30 
+                  ? session.title.slice(0, 30) + "..." 
+                  : session.title}
+              </span>
               <button 
                 onClick={(e) => deleteSession(e, session.id)}
                 className={styles.deleteButton}
