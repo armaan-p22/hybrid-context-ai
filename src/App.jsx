@@ -219,17 +219,17 @@ export default function App() {
     updateCurrentSessionMessages(newMessages);
 
     try {
-      let systemInstruction = "You are a helpful, private AI assistant.";
+      let systemInstruction = "You are a helpful, private AI assistant. Be concise.";
       let contextData = "";
 
       if (currentFile) {
-        systemInstruction = "You are a helpful AI. Answer questions using ONLY the user uploaded file context below.";
+        systemInstruction = "You are a helpful AI. Answer questions using ONLY the user uploaded file context below. Be concise.";
         // Safeguard: Limit context to ~20,000 chars
         const safeFileContent = currentFile.slice(0, 20000); 
         contextData = `\n\n=== USER UPLOADED FILE (${currentFileName}) ===\n${safeFileContent}`;
       } else if (useWebSearch) {
         const today = new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
-        systemInstruction = `You are a web-enabled AI. Today is ${today}. Answer using the search results below.`;
+        systemInstruction = `You are a web-enabled AI. Today is ${today}. Answer using the search results below. Be concise.`;
         const searchResults = await performWebSearch(currentInput);
         contextData = `\n\n${searchResults}`;
       }
@@ -267,10 +267,10 @@ export default function App() {
         
         const titleResponse = await engine.chat.completions.create({
           messages: [
-            { role: "system", content: "You are a title generator. Reply with a static, 3-5 word topic label. Do NOT explain. Do NOT use punctuation." },
-            { role: "user", content: currentInput }
+            { role: "system", content: "Summarize the following message into a concise 3-5 word title. Do NOT explain. Return ONLY the title text." },
+            { role: "user", content: `Message to summarize: "${currentInput}"` }
           ],
-          max_tokens: 10,
+          max_tokens: 15,
         });
         
         let smartTitle = titleResponse.choices[0].message.content.trim();
@@ -354,9 +354,13 @@ export default function App() {
                 <div className={msg.role === "user" ? styles.bubbleUser : styles.bubbleAI}>
                   <strong>{msg.role === "user" ? "You" : "AI"}:</strong>
                   <div className={msg.role === "user" ? styles.markdownUser : styles.markdownAI}>
-                    <ReactMarkdown>
-                      {msg.content}
-                    </ReactMarkdown>
+                    {msg.role === "assistant" && !msg.content ? (
+                      <div className={styles.loadingDots}>...</div>
+                    ) : (
+                      <ReactMarkdown>
+                        {msg.content}
+                      </ReactMarkdown>
+                    )}
                   </div>
                 </div>
               </div>

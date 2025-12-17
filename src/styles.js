@@ -55,6 +55,7 @@ export const styles = {
 
   markdownAI: `${markdownBase} text-gray-800`,
   markdownUser: `${markdownBase} prose-invert text-white`,
+  loadingDots: "animate-pulse text-gray-400 text-2xl font-bold leading-none ml-1",
 
   disclaimer: "bg-gray-50 p-2 text-center text-[10px] text-gray-400 border-t border-gray-100"
 };
